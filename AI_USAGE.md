@@ -12,6 +12,7 @@ all the actual design decisions were mine.
 ## Where I used it
 
 - Verification of my API routes and their return values
+- To create test suites that cover my code
 
 ## Where I deliberately didn't use it
 

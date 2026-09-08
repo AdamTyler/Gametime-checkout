@@ -6,6 +6,7 @@ export type Device = {
   hasGooglePay: boolean;
 };
 
+// going to return wrong platform here for completeness... we will hide them in the UI
 export type Reason = 'wrong_platform' | 'not_provisioned' | 'below_minimum';
 
 export type MethodEligibility = {
