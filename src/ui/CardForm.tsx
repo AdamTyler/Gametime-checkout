@@ -44,18 +44,24 @@ export function CardForm({ disabled, onPay }: Props) {
       0,
       numberLength(detectBrand(onlyDigits(text))),
     );
+    const before = onlyDigits(fields.number).length;
     setFields((f) => ({
       ...f,
       number: formatCardNumber(digits, detectBrand(digits)),
     }));
-    if (digits.length === numberLength(detectBrand(digits)))
+    if (
+      digits.length === numberLength(detectBrand(digits)) &&
+      before < digits.length
+    ) {
       expiryRef.current?.focus();
+    }
   }
 
   function onExpiry(text: string) {
     const digits = onlyDigits(text).slice(0, 4);
+    const before = onlyDigits(fields.expiry).length;
     setFields((f) => ({ ...f, expiry: formatExpiry(digits) }));
-    if (digits.length === 4) cvcRef.current?.focus();
+    if (digits.length === 4 && before < 4) cvcRef.current?.focus();
   }
 
   function onCvc(text: string) {
@@ -83,6 +89,7 @@ export function CardForm({ disabled, onPay }: Props) {
           placeholder='4242 4242 4242 4242'
           returnKeyType='next'
           onSubmitEditing={() => expiryRef.current?.focus()}
+          maxLength={brand === 'amex' ? 17 : 19}
         />
         {show('number') && <Text style={styles.error}>{errors.number}</Text>}
       </View>
@@ -102,6 +109,7 @@ export function CardForm({ disabled, onPay }: Props) {
             placeholder='MM/YY'
             returnKeyType='next'
             onSubmitEditing={() => cvcRef.current?.focus()}
+            maxLength={5}
           />
           {show('expiry') && <Text style={styles.error}>{errors.expiry}</Text>}
         </View>
@@ -119,6 +127,7 @@ export function CardForm({ disabled, onPay }: Props) {
             autoComplete='cc-csc'
             placeholder={brand === 'amex' ? '1234' : '123'}
             returnKeyType='done'
+            maxLength={cvcLength(brand)}
           />
           {show('cvc') && <Text style={styles.error}>{errors.cvc}</Text>}
         </View>

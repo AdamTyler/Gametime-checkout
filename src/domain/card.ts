@@ -71,7 +71,7 @@ export function validateCard(fields: CardFields, now = new Date()): CardErrors {
   const brand = detectBrand(digits);
 
   if (digits.length !== numberLength(brand) || !luhn(digits)) {
-    errors.number = 'Check your card number';
+    errors.number = 'Invalid card number. Try again';
   }
 
   const exp = parseExpiry(fields.expiry);
