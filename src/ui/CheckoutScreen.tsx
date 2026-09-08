@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { evaluateEligibility } from '../domain/eligibility';
 import { useDevice } from '../payments/useDevice';
+import { usePayment } from '../payments/usePayment';
+import { presentAffirm, presentWalletSheet } from '../payments/wallets';
 import { DevSheet } from '../devtools/DevSheet';
 
 const order = {
@@ -16,10 +18,14 @@ const totalCents = order.qty * order.unitCents + order.feeCents;
 export function CheckoutScreen() {
   const device = useDevice();
   const [devOpen, setDevOpen] = useState(false);
+  const { state, pay, reset, retry } = usePayment(order.id, totalCents);
 
   const eligibility = device ? evaluateEligibility(device, totalCents) : [];
   const canUse = (method: string) =>
     eligibility.some((e) => e.method === method && e.eligible);
+
+  const busy = state.status !== 'idle';
+  const done = ['succeeded', 'declined', 'failed'].includes(state.status);
 
   return (
     <View style={styles.screen}>
@@ -38,28 +44,67 @@ export function CheckoutScreen() {
       {!device && <Text style={styles.muted}>Checking payment options...</Text>}
 
       {canUse('apple_pay') && (
-        <Pressable style={styles.method}>
+        <Pressable
+          style={styles.method}
+          disabled={busy}
+          onPress={() => pay('apple_pay', presentWalletSheet)}
+        >
           <Text style={styles.methodText}>Apple Pay</Text>
         </Pressable>
       )}
 
       {canUse('google_pay') && (
-        <Pressable style={styles.method}>
+        <Pressable
+          style={styles.method}
+          disabled={busy}
+          onPress={() => pay('google_pay', presentWalletSheet)}
+        >
           <Text style={styles.methodText}>Google Pay</Text>
         </Pressable>
       )}
 
       {canUse('affirm') && (
-        <Pressable style={styles.method}>
+        <Pressable
+          style={styles.method}
+          disabled={busy}
+          onPress={() => pay('affirm', presentAffirm)}
+        >
           <Text style={styles.methodText}>Affirm</Text>
         </Pressable>
       )}
 
       {canUse('card') && (
-        <Pressable style={styles.method}>
+        <Pressable style={styles.method} disabled={busy}>
           <Text style={styles.methodText}>Credit card</Text>
         </Pressable>
       )}
+
+      <View style={styles.status}>
+        {state.status === 'authorizing' && (
+          <Text>Waiting on {state.method}...</Text>
+        )}
+        {state.status === 'confirming' && <Text>Confirming...</Text>}
+        {state.status === 'reconciling' && (
+          <>
+            <Text>Checking on your payment...</Text>
+            <Pressable onPress={retry}>
+              <Text style={styles.link}>check again</Text>
+            </Pressable>
+          </>
+        )}
+        {state.status === 'succeeded' && (
+          <Text>Paid. Receipt {state.intent.receiptId}</Text>
+        )}
+        {state.status === 'declined' && (
+          <Text>Declined ({state.intent.declineCode})</Text>
+        )}
+        {state.status === 'failed' && <Text>{state.message}</Text>}
+        {done && (
+          <Pressable onPress={reset}>
+            <Text style={styles.link}>start over</Text>
+          </Pressable>
+        )}
+      </View>
 
       <DevSheet
         visible={devOpen}
@@ -77,6 +122,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     gap: 12,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,
@@ -104,5 +150,12 @@ const styles = StyleSheet.create({
   methodText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  status: {
+    marginTop: 16,
+    gap: 8,
+  },
+  link: {
+    color: '#0066cc',
   },
 });
