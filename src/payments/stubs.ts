@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { onlyDigits } from '../domain/card';
+import { sim } from '../devtools/sim';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -18,14 +19,16 @@ export async function googlePayIsReadyToPay(): Promise<boolean> {
 export async function presentWalletSheet(): Promise<string | null> {
   // add delay for faceId/fingerprint (long enough to background)
   await sleep(2000);
-  return `tok_wallet_${Date.now()}`;
+  if (sim.wallet === 'cancel') return null;
+  return sim.wallet === 'decline' ? `tok_wallet_decline_${Date.now()}` : `tok_wallet_${Date.now()}`;
 }
 
 // Affirm is a browser redirect in real life. Same shape here, longer wait.
 export async function presentAffirm(): Promise<string | null> {
   // add delay for faceId/fingerprint (long enough to background)
   await sleep(3000);
-  return `tok_affirm_${Date.now()}`;
+  if (sim.wallet === 'cancel') return null;
+  return sim.wallet === 'decline' ? `tok_affirm_decline_${Date.now()}` : `tok_affirm_${Date.now()}`;
 }
 
 export async function tokenizeCard(number: string): Promise<string> {

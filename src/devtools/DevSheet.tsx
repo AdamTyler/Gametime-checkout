@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import type { Device, MethodEligibility } from '../domain/eligibility';
 import { useOverrides } from './overrides';
+import { sim } from './sim';
+import { useState } from 'react';
 
 type Props = {
   visible: boolean;
@@ -18,6 +20,8 @@ type Props = {
 
 export function DevSheet({ visible, onClose, device, eligibility }: Props) {
   const { overrides, setOverrides } = useOverrides();
+  const [, rerender] = useState(0);
+  const poke = () => rerender((n) => n + 1);
 
   return (
     <Modal visible={visible} onRequestClose={onClose}>
@@ -80,6 +84,38 @@ export function DevSheet({ visible, onClose, device, eligibility }: Props) {
         <Pressable style={styles.btn} onPress={() => setOverrides({})}>
           <Text>clear overrides</Text>
         </Pressable>
+
+        <Text style={styles.heading}>Simulate</Text>
+        <Text>wallet: {sim.wallet}</Text>
+        <View style={styles.row}>
+          <Pressable
+            style={styles.btn}
+            onPress={() => {
+              sim.wallet = 'approve';
+              poke();
+            }}
+          >
+            <Text>approve</Text>
+          </Pressable>
+          <Pressable
+            style={styles.btn}
+            onPress={() => {
+              sim.wallet = 'cancel';
+              poke();
+            }}
+          >
+            <Text>cancel</Text>
+          </Pressable>
+          <Pressable
+            style={styles.btn}
+            onPress={() => {
+              sim.wallet = 'decline';
+              poke();
+            }}
+          >
+            <Text>decline</Text>
+          </Pressable>
+        </View>
 
         <Text style={styles.heading}>Device</Text>
         <Text>{device ? JSON.stringify(device) : 'probing...'}</Text>
