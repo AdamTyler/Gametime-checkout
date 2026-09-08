@@ -11,12 +11,6 @@ export type IntentStatus =
 
 export type DeclineCode = 'insufficient_funds' | 'expired_card' | 'do_not_honor';
 
-export interface MerchantConfig {
-  currency: 'USD';
-  affirmMinimumCents: number; // strictly greater than
-  enabledMethods: PaymentMethodId[];
-}
-
 export interface PaymentIntent {
   id: string;
   orderId: string;
