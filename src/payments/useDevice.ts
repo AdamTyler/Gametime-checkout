@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import type { Device } from '../domain/eligibility';
 import { useOverrides } from '../devtools/overrides';
-import { applePayCanMakePayments, googlePayIsReadyToPay } from './wallets';
+import { applePayCanMakePayments, googlePayIsReadyToPay } from './stubs';
 
 // real detection with dev overrides on top
 export function useDevice(): Device | null {

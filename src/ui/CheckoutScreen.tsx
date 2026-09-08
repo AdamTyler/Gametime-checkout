@@ -3,8 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { evaluateEligibility } from '../domain/eligibility';
 import { useDevice } from '../payments/useDevice';
 import { usePayment } from '../payments/usePayment';
-import { presentAffirm, presentWalletSheet } from '../payments/wallets';
+import {
+  presentAffirm,
+  presentWalletSheet,
+  tokenizeCard,
+} from '../payments/stubs';
 import { DevSheet } from '../devtools/DevSheet';
+import { CardForm } from './CardForm';
 
 const order = {
   id: 'ord_1',
@@ -18,6 +23,7 @@ const totalCents = order.qty * order.unitCents + order.feeCents;
 export function CheckoutScreen() {
   const device = useDevice();
   const [devOpen, setDevOpen] = useState(false);
+  const [showCard, setShowCard] = useState(false);
   const { state, pay, reset, retry } = usePayment(order.id, totalCents);
 
   const eligibility = device ? evaluateEligibility(device, totalCents) : [];
@@ -26,6 +32,9 @@ export function CheckoutScreen() {
 
   const busy = state.status !== 'idle';
   const done = ['succeeded', 'declined', 'failed'].includes(state.status);
+
+  console.log('Checkout Screen: eligibility', eligibility);
+  console.log('Checkout Screen: state', state);
 
   return (
     <View style={styles.screen}>
@@ -74,9 +83,20 @@ export function CheckoutScreen() {
       )}
 
       {canUse('card') && (
-        <Pressable style={styles.method} disabled={busy}>
+        <Pressable
+          style={styles.method}
+          disabled={busy}
+          onPress={() => setShowCard((v) => !v)}
+        >
           <Text style={styles.methodText}>Credit card</Text>
         </Pressable>
+      )}
+
+      {showCard && (
+        <CardForm
+          disabled={busy}
+          onPay={(fields) => pay('card', () => tokenizeCard(fields.number))}
+        />
       )}
 
       <View style={styles.status}>

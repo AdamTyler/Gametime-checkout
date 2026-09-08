@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { onlyDigits } from '../domain/card';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -25,4 +26,11 @@ export async function presentAffirm(): Promise<string | null> {
   // add delay for faceId/fingerprint (long enough to background)
   await sleep(3000);
   return `tok_affirm_${Date.now()}`;
+}
+
+export async function tokenizeCard(number: string): Promise<string> {
+  await sleep(400);
+  const digits = onlyDigits(number);
+  const last4 = digits.slice(-4);
+  return digits === '4000000000000002' ? `tok_card_decline_${last4}` : `tok_card_${last4}`;
 }
