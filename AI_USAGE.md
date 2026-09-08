@@ -13,6 +13,7 @@ all the actual design decisions were mine.
 
 - Verification of my API routes and their return values
 - To create test suites that cover my code
+- Used to reason about my payments state machine and the states that I should account for
 
 ## Where I deliberately didn't use it
 
