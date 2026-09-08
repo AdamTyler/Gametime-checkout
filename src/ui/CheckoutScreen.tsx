@@ -14,16 +14,17 @@ import { CardForm } from './CardForm';
 const order = {
   id: 'ord_1',
   seats: 'Sec 112 Row F',
-  qty: 2,
   unitCents: 5500,
   feeCents: 1200,
 };
-const totalCents = order.qty * order.unitCents + order.feeCents;
 
 export function CheckoutScreen() {
   const device = useDevice();
   const [devOpen, setDevOpen] = useState(false);
   const [showCard, setShowCard] = useState(false);
+  const [quantity, setQuantity] = useState(2);
+
+  const totalCents = quantity * order.unitCents + order.feeCents;
   const { state, pay, reset, retry } = usePayment(order.id, totalCents);
 
   const eligibility = device ? evaluateEligibility(device, totalCents) : [];
@@ -43,9 +44,28 @@ export function CheckoutScreen() {
       </Pressable>
 
       <View style={styles.summary}>
-        <Text>
-          {order.qty} x {order.seats}
-        </Text>
+        <View style={styles.quantityRow}>
+          <Text>{order.seats}</Text>
+          <View style={styles.stepper}>
+            <Pressable
+              style={styles.step}
+              disabled={busy || quantity === 1}
+              onPress={() => setQuantity(quantity - 1)}
+              hitSlop={8}
+            >
+              <Text style={styles.stepText}>-</Text>
+            </Pressable>
+            <Text style={styles.quantity}>{quantity}</Text>
+            <Pressable
+              style={styles.step}
+              disabled={busy || quantity === 8}
+              onPress={() => setQuantity(quantity + 1)}
+              hitSlop={8}
+            >
+              <Text style={styles.stepText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
         <Text>Fees ${(order.feeCents / 100).toFixed(2)}</Text>
         <Text style={styles.total}>Total ${(totalCents / 100).toFixed(2)}</Text>
       </View>
@@ -177,5 +197,32 @@ const styles = StyleSheet.create({
   },
   link: {
     color: '#0066cc',
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  step: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: {
+    fontSize: 18,
+  },
+  quantity: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    minWidth: 20,
+    textAlign: 'center',
   },
 });
