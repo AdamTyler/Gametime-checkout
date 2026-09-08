@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { evaluateEligibility } from '../domain/eligibility';
 import { useDevice } from '../payments/useDevice';
 import { usePayment } from '../payments/usePayment';
@@ -38,131 +46,161 @@ export function CheckoutScreen() {
   console.log('Checkout Screen: state', state);
 
   return (
-    <View style={styles.screen}>
-      <Pressable onLongPress={() => setDevOpen(true)}>
-        <Text style={styles.title}>Checkout</Text>
-      </Pressable>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps='handled'
+      >
+        <Pressable onLongPress={() => setDevOpen(true)}>
+          <Text style={styles.title}>Checkout</Text>
+        </Pressable>
 
-      <View style={styles.summary}>
-        <View style={styles.quantityRow}>
-          <Text>{order.seats}</Text>
-          <View style={styles.stepper}>
-            <Pressable
-              style={styles.step}
-              disabled={busy || quantity === 1}
-              onPress={() => setQuantity(quantity - 1)}
-              hitSlop={8}
-            >
-              <Text style={styles.stepText}>-</Text>
-            </Pressable>
-            <Text style={styles.quantity}>{quantity}</Text>
-            <Pressable
-              style={styles.step}
-              disabled={busy || quantity === 8}
-              onPress={() => setQuantity(quantity + 1)}
-              hitSlop={8}
-            >
-              <Text style={styles.stepText}>+</Text>
-            </Pressable>
+        <View style={styles.summary}>
+          <View style={styles.quantityRow}>
+            <Text>{order.seats}</Text>
+            <View style={styles.stepper}>
+              <Pressable
+                style={styles.step}
+                disabled={busy || quantity === 1}
+                onPress={() => setQuantity(quantity - 1)}
+                hitSlop={8}
+              >
+                <Text style={styles.stepText}>-</Text>
+              </Pressable>
+              <Text style={styles.quantity}>{quantity}</Text>
+              <Pressable
+                style={styles.step}
+                disabled={busy || quantity === 8}
+                onPress={() => setQuantity(quantity + 1)}
+                hitSlop={8}
+              >
+                <Text style={styles.stepText}>+</Text>
+              </Pressable>
+            </View>
           </View>
+          <Text>Fees ${(order.feeCents / 100).toFixed(2)}</Text>
+          <Text style={styles.total}>
+            Total ${(totalCents / 100).toFixed(2)}
+          </Text>
         </View>
-        <Text>Fees ${(order.feeCents / 100).toFixed(2)}</Text>
-        <Text style={styles.total}>Total ${(totalCents / 100).toFixed(2)}</Text>
-      </View>
 
-      {!device && <Text style={styles.muted}>Checking payment options...</Text>}
-
-      {canUse('apple_pay') && (
-        <Pressable
-          style={styles.method}
-          disabled={busy}
-          onPress={() => pay('apple_pay', presentWalletSheet)}
-        >
-          <Text style={styles.methodText}>Apple Pay</Text>
-        </Pressable>
-      )}
-
-      {canUse('google_pay') && (
-        <Pressable
-          style={styles.method}
-          disabled={busy}
-          onPress={() => pay('google_pay', presentWalletSheet)}
-        >
-          <Text style={styles.methodText}>Google Pay</Text>
-        </Pressable>
-      )}
-
-      {canUse('affirm') && (
-        <Pressable
-          style={styles.method}
-          disabled={busy}
-          onPress={() => pay('affirm', presentAffirm)}
-        >
-          <Text style={styles.methodText}>Affirm</Text>
-        </Pressable>
-      )}
-
-      {canUse('card') && (
-        <Pressable
-          style={styles.method}
-          disabled={busy}
-          onPress={() => setShowCard((v) => !v)}
-        >
-          <Text style={styles.methodText}>Credit card</Text>
-        </Pressable>
-      )}
-
-      {showCard && (
-        <CardForm
-          disabled={busy}
-          onPay={(fields) => pay('card', () => tokenizeCard(fields.number))}
-        />
-      )}
-
-      <View style={styles.status}>
-        {state.status === 'authorizing' && (
-          <Text>Waiting on {state.method}...</Text>
+        {!device && (
+          <Text style={styles.muted}>Checking payment options...</Text>
         )}
-        {state.status === 'confirming' && <Text>Confirming...</Text>}
-        {state.status === 'reconciling' && (
-          <>
-            <Text>Checking on your payment...</Text>
-            <Pressable onPress={retry}>
-              <Text style={styles.link}>check again</Text>
-            </Pressable>
-          </>
-        )}
-        {state.status === 'succeeded' && (
-          <Text>Paid. Receipt {state.intent.receiptId}</Text>
-        )}
-        {state.status === 'declined' && (
-          <Text>Declined ({state.intent.declineCode})</Text>
-        )}
-        {state.status === 'failed' && <Text>{state.message}</Text>}
-        {done && (
-          <Pressable onPress={reset}>
-            <Text style={styles.link}>start over</Text>
+
+        <Text style={styles.section}>Pay with</Text>
+
+        {canUse('apple_pay') && (
+          <Pressable
+            style={[
+              styles.method,
+              styles.applePay,
+              busy && styles.methodDisabled,
+            ]}
+            disabled={busy}
+            onPress={() => pay('apple_pay', presentWalletSheet)}
+          >
+            <Text style={styles.methodText}>Apple Pay</Text>
           </Pressable>
         )}
-      </View>
 
-      <DevSheet
-        visible={devOpen}
-        onClose={() => setDevOpen(false)}
-        device={device}
-        eligibility={eligibility}
-      />
-    </View>
+        {canUse('google_pay') && (
+          <Pressable
+            style={[
+              styles.method,
+              styles.googlePay,
+              busy && styles.methodDisabled,
+            ]}
+            disabled={busy}
+            onPress={() => pay('google_pay', presentWalletSheet)}
+          >
+            <Text style={[styles.methodText, styles.googlePayText]}>
+              Google Pay
+            </Text>
+          </Pressable>
+        )}
+
+        {canUse('affirm') && (
+          <Pressable
+            style={[
+              styles.method,
+              styles.affirm,
+              busy && styles.methodDisabled,
+            ]}
+            disabled={busy}
+            onPress={() => pay('affirm', presentAffirm)}
+          >
+            <Text style={styles.methodText}>Affirm</Text>
+          </Pressable>
+        )}
+
+        {canUse('card') && (
+          <Pressable
+            style={[styles.method, busy && styles.methodDisabled]}
+            disabled={busy}
+            onPress={() => setShowCard((v) => !v)}
+          >
+            <Text style={styles.methodText}>Credit card</Text>
+          </Pressable>
+        )}
+
+        {showCard && (
+          <CardForm
+            disabled={busy}
+            onPay={(fields) => pay('card', () => tokenizeCard(fields.number))}
+          />
+        )}
+
+        <View style={styles.status}>
+          {state.status === 'authorizing' && (
+            <Text>Waiting on {state.method}...</Text>
+          )}
+          {state.status === 'confirming' && <Text>Confirming...</Text>}
+          {state.status === 'reconciling' && (
+            <>
+              <Text>Checking on your payment...</Text>
+              <Pressable onPress={retry}>
+                <Text style={styles.link}>check again</Text>
+              </Pressable>
+            </>
+          )}
+          {state.status === 'succeeded' && (
+            <Text>Paid. Receipt {state.intent.receiptId}</Text>
+          )}
+          {state.status === 'declined' && (
+            <Text>Declined ({state.intent.declineCode})</Text>
+          )}
+          {state.status === 'failed' && <Text>{state.message}</Text>}
+          {done && (
+            <Pressable onPress={reset}>
+              <Text style={styles.link}>start over</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <DevSheet
+          visible={devOpen}
+          onClose={() => setDevOpen(false)}
+          device={device}
+          eligibility={eligibility}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  content: {
     padding: 20,
     paddingTop: 60,
     gap: 12,
-    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,
@@ -224,5 +262,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     minWidth: 20,
     textAlign: 'center',
+  },
+  applePay: {
+    backgroundColor: '#000',
+  },
+  googlePay: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  googlePayText: {
+    color: '#073e12',
+  },
+  affirm: {
+    backgroundColor: '#4a4af4',
+  },
+  methodDisabled: {
+    opacity: 0.4,
+  },
+  section: {
+    fontSize: 13,
+    color: '#555',
+    marginTop: 4,
   },
 });
